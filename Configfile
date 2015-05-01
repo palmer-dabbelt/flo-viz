@@ -1,0 +1,27 @@
+# This strives to build my C++ code in the safest way possible.
+LANGUAGES   += c++
+COMPILEOPTS += -Wall
+COMPILEOPTS += -Wextra
+COMPILEOPTS += -Werror
+COMPILEOPTS += -std=c++0x
+COMPILEOPTS += -pedantic
+
+# Staticly link against some internal libraries
+LANGUAGES   += c++
+COMPILEOPTS += -Isrc
+
+# BASH is used to run tests
+LANGUAGES   += bash
+
+# This reads the version information from git and makes it availiable
+# for all the other code.
+GENERATE    += version.h
+
+# Everyone depends on some common libraires
+LANGUAGES   += c++
+COMPILEOPTS += `ppkg-config flo --cflags`
+LINKOPTS    += `ppkg-config flo --libs`
+
+# Displays a Flo graph in an OpenGL window
+BINARIES    += flo-viz
+SOURCES     += viz.c++
