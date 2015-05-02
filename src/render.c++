@@ -19,29 +19,30 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef NODE_HXX
-#define NODE_HXX
+#include "render.h++"
+#include <iostream>
 
-#include <libflo/node.h++>
-#include <memory>
+render::render(const flo::ptr& circuit, int width, int height, float dpi)
+    : _circuit(circuit),
+      _width(width),
+      _height(height),
+      _dpi(dpi),
+      _top( module::parse(circuit) )
+{
+    if (_top == NULL) {
+        std::cerr << "Unable to parse module hierarchy\n";
+        abort();
+    }
+}
 
-class node: public libflo::node {
-public:
-    friend class libflo::node;
-    typedef std::shared_ptr<node> ptr;
+void render::resize(int new_width, int new_height, float new_dpi)
+{
+    _width = new_width;
+    _height = new_height;
+    _dpi = new_dpi;
+}
 
-private:
-
-public:
-        node(const std::string name,
-             const libflo::unknown<size_t>& width,
-             const libflo::unknown<size_t>& depth,
-             bool is_mem,
-             bool is_const,
-             libflo::unknown<size_t> cycle,
-             const libflo::unknown<std::string>& posn);
-
-public:
-};
-
-#endif
+std::vector<drawable::ptr> render::all_visible(void) const
+{
+    return {_top};
+}

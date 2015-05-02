@@ -24,9 +24,12 @@
 
 #include "node.h++"
 #include <libflo/operation.h++>
+#include <memory>
 
 class operation: public libflo::operation<node> {
+public:
     friend class libflo::operation<node>;
+    typedef std::shared_ptr<operation> ptr;
 
 private:
     operation(std::shared_ptr<node>& dest,

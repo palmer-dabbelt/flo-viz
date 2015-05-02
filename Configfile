@@ -24,4 +24,6 @@ LINKOPTS    += `ppkg-config flo --libs`
 
 # Displays a Flo graph in an OpenGL window
 BINARIES    += flo-viz
+COMPILEOPTS += `ppkg-config sfml-all --cflags`
+LINKOPTS    += `ppkg-config sfml-all --libs`
 SOURCES     += viz.c++

@@ -19,29 +19,21 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef NODE_HXX
-#define NODE_HXX
+#ifndef DRAWABLE_HXX
+#define DRAWABLE_HXX
 
-#include <libflo/node.h++>
+#include <SFML/Graphics.hpp>
 #include <memory>
 
-class node: public libflo::node {
+/* An object that can be drawn to the screen. */
+class drawable {
 public:
-    friend class libflo::node;
-    typedef std::shared_ptr<node> ptr;
-
-private:
+    typedef std::shared_ptr<drawable> ptr;
 
 public:
-        node(const std::string name,
-             const libflo::unknown<size_t>& width,
-             const libflo::unknown<size_t>& depth,
-             bool is_mem,
-             bool is_const,
-             libflo::unknown<size_t> cycle,
-             const libflo::unknown<std::string>& posn);
-
-public:
+    /* Draws the given object to the window, at whatever position and
+     * size it deems appropriate. */
+    virtual void draw(const std::shared_ptr<sf::RenderWindow>& window) = 0;
 };
 
 #endif
