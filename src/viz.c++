@@ -68,6 +68,17 @@ int main(int argc __attribute__((unused)),
                 world->resize(event.size.width,
                               event.size.height,
                               200);
+
+                window->setView(
+                    sf::View(
+                        sf::FloatRect(
+                            0.0f,
+                            0.0f,
+                            world->window_width(),
+                            world->window_height()
+                            )
+                        )
+                    );
                 break;
 
             case sf::Event::KeyPressed:

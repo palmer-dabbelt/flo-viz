@@ -59,6 +59,12 @@ public:
     /* Changes the size of the window. */
     void resize(int new_width, int new_height, float new_dpi);
 
+    /* Obtains the current zoom level of the scene. */
+    double zoom_level(void) const { return 1000.0; }
+    double aspect_ratio(void) const { return (double)_height / _width; }
+    double window_width(void) const { return zoom_level(); }
+    double window_height(void) const { return zoom_level() * aspect_ratio(); }
+
     /* Returns a list of every drawable object that's currently
      * visible. */
     std::vector<drawable::ptr> all_visible(void) const;
