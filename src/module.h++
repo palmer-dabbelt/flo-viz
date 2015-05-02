@@ -43,7 +43,8 @@ private:
     const std::vector<module::ptr> _child_modules;
     const std::vector<node::ptr> _child_nodes;
     const std::vector<operation::ptr> _child_ops;
-    const std::vector<node::ptr> _ports;
+    const std::vector<node::ptr> _inputs;
+    const std::vector<node::ptr> _outputs;
 
     /* Information about how to draw the module, which will change
      * over the lifetime of the run. */
@@ -56,11 +57,16 @@ public:
            const std::vector<module::ptr> child_modules,
            const std::vector<node::ptr> child_nodes,
            const std::vector<operation::ptr> child_ops,
-           const std::vector<node::ptr> ports);
+           const std::vector<node::ptr> inputs,
+           const std::vector<node::ptr> outputs);
+
+public:
+    /* Accessors */
+    const std::string& name(void) const { return _name; }
 
 public:
     /* Parses a Flo file to produce a module hierarchy and returns a
-     * pointer to the top-level module in that heirarchy. */
+     * pointer to the top-level module in that hierarchy. */
     static ptr parse(const flo::ptr& circuit);
 
 public:

@@ -45,13 +45,28 @@ module::module(const std::string& name,
                const std::vector<module::ptr> child_modules,
                const std::vector<node::ptr> child_nodes,
                const std::vector<operation::ptr> child_ops,
-               const std::vector<node::ptr> ports)
+               const std::vector<node::ptr> inputs,
+               const std::vector<node::ptr> outputs)
     : _name(name),
       _child_modules(child_modules),
       _child_nodes(child_nodes),
       _child_ops(child_ops),
-      _ports(ports)
+      _inputs(inputs),
+      _outputs(outputs)
 {
+    std::cerr << "Module " << name << " {\n";
+    for (const auto& port: inputs)
+        std::cerr << "  Input " << port->name() << ";\n";
+    for (const auto& port: outputs)
+        std::cerr << "  Output " << port->name() << ";\n";
+    for (const auto& child: child_modules)
+        std::cerr << "  Child " << child->name() << ";\n";
+    for (const auto& node: child_nodes)
+        if (node->is_const() == false)
+            std::cerr << "  Node " << node->name() << ";\n";
+    for (const auto& op: child_ops)
+        std::cerr << "  " << op->to_string() << ";\n";
+    std::cerr << "};\n";
 }
 
 module::ptr module::parse(const flo::ptr& circuit)
@@ -61,6 +76,9 @@ module::ptr module::parse(const flo::ptr& circuit)
      * module. */
     auto modulenames = std::vector<std::string>();
     auto modulename2ops = std::multimap<std::string, operation::ptr>();
+    auto modulename2nodes = std::multimap<std::string, node::ptr>();
+    auto modulename2inputs = std::multimap<std::string, node::ptr>();
+    auto modulename2outputs = std::multimap<std::string, node::ptr>();
     auto op2modulename = std::unordered_map<operation::ptr, std::string>();
     auto node2modulename = std::unordered_map<node::ptr, std::string>();
 
@@ -70,8 +88,17 @@ module::ptr module::parse(const flo::ptr& circuit)
                 modulenames.push_back(m);
             modulename2ops.insert(std::make_pair(m, op));
             op2modulename[op] = m;
-            for (const auto& node: op->operands())
+            for (const auto& node: op->operands()) {
+                if (node2modulename.find(node) != node2modulename.end())
+                    continue;
+
                 node2modulename[node] = m;
+                modulename2nodes.insert(std::make_pair(m, node));
+            }
+            if (op->op() == libflo::opcode::IN)
+                modulename2inputs.insert(std::make_pair(m, op->d()));
+            if (op->op() == libflo::opcode::OUT)
+                modulename2outputs.insert(std::make_pair(m, op->d()));
         };
 
     auto all_same_module = [&](const operation::ptr& op) -> std::string
@@ -121,7 +148,9 @@ module::ptr module::parse(const flo::ptr& circuit)
             continue;
         }
 
-        /*  */
+        /* This is the main module check: see if all the assigned nodes in a
+         * this op are in the same module, and if so this op is within
+         * this module. */
         auto found_module = all_same_module(op);
         if (found_module.compare("") != 0) {
             insert_op(op, found_module);
@@ -159,14 +188,46 @@ module::ptr module::parse(const flo::ptr& circuit)
     auto modulename2children = std::multimap<std::string, module::ptr>();
     for (const auto& module_name: modulenames) {
         auto child_modules = std::vector<module::ptr>();
+        std::transform(
+            modulename2children.lower_bound(module_name),
+            modulename2children.upper_bound(module_name),
+            std::back_inserter(child_modules),
+            [](std::pair<std::string, module::ptr> p){ return p.second; });
+
         auto child_nodes = std::vector<node::ptr>();
+        std::transform(
+            modulename2nodes.lower_bound(module_name),
+            modulename2nodes.upper_bound(module_name),
+            std::back_inserter(child_nodes),
+            [](std::pair<std::string, node::ptr> p){ return p.second; });
+
         auto child_ops = std::vector<operation::ptr>();
-        auto ports = std::vector<node::ptr>();
+        std::transform(
+            modulename2ops.lower_bound(module_name),
+            modulename2ops.upper_bound(module_name),
+            std::back_inserter(child_ops),
+            [](std::pair<std::string, operation::ptr> p){ return p.second; });
+
+        auto inputs = std::vector<node::ptr>();
+        std::transform(
+            modulename2inputs.lower_bound(module_name),
+            modulename2inputs.upper_bound(module_name),
+            std::back_inserter(inputs),
+            [](std::pair<std::string, node::ptr> p){ return p.second; });
+
+        auto outputs = std::vector<node::ptr>();
+        std::transform(
+            modulename2outputs.lower_bound(module_name),
+            modulename2outputs.upper_bound(module_name),
+            std::back_inserter(outputs),
+            [](std::pair<std::string, node::ptr> p){ return p.second; });
+
         auto m = std::make_shared<module>(module_name,
                                           child_modules,
                                           child_nodes,
                                           child_ops,
-                                          ports);
+                                          inputs,
+                                          outputs);
 
         auto parent_name = find_prefix(module_name);
         if (parent_name.compare("") == 0)
